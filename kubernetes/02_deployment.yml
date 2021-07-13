@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tpm-simulator-1
+  namespace: %NAMESPACE%
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tpm-simulator-1
+      serverpod: tpm-simulator-1
+  template:
+    metadata:
+      labels:
+        app: tpm-simulator-1
+        serverpod: tpm-simulator-1
+    spec:
+      imagePullSecrets:
+        - name: %IMAGE_PULL_SECRET%
+      containers:
+        - name: tpm-simulator-1
+          image: %ICR_INSTANCE%/%ICR_NAMESPACE%/tpm-client:%VERSION%
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 2321
+              name: tpm-port
+            - containerPort: 2322
+              name: platform-port

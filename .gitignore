@@ -1,0 +1,17 @@
+# IDE settings folders
+#
+**/.vs
+**/.idea
+
+# build folders
+#
+**/build
+**/build*debug
+**/build*release
+
+# except the "build" script from the docker subfolder
+#
+!docker/build
+
+# Ignore Gradle project-specific cache directory
+.gradle

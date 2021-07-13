@@ -1,0 +1,104 @@
+#include "Session.h"
+
+#include "Exception.h"
+#include "Utils.h"
+
+#include <ibmtss/tss.h>
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace
+{
+    tpmclient::Session::NativeType OpenSession()
+    {
+        tpmclient::Session::NativeType sessionNativeType{};
+
+        const auto result = TSS_Create(&sessionNativeType);
+        if (result)
+        {
+            throw tpmclient::Exception{"Unable to open session: " + tpmclient::Utils::BuildErrorMessage(result),
+                                       result};
+        }
+
+        return sessionNativeType;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    void CloseSession(tpmclient::Session::NativeType sessionNativeType)
+    {
+        if (TSS_Delete(sessionNativeType))
+        {
+            // this might be inside a destructor, so avoid throwing an exception
+            //
+            // LOG(WARNING) << "Unable to close session: " + Utils::BuildErrorMessage(result)};
+        }
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+tpmclient::Session::Session()
+: mSession{nullptr, CloseSession}
+{
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void tpmclient::Session::open()
+{
+    if (isOpen())
+    {
+        throw Exception{"Unable to open session: it is already open"};
+    }
+
+    mSession.reset(OpenSession());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void tpmclient::Session::close()
+{
+    if (isClosed())
+    {
+        throw Exception{"Unable to close session: it is already closed"};
+    }
+
+    mSession.reset();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool tpmclient::Session::isOpen() const
+{
+    return mSession != nullptr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool tpmclient::Session::isClosed() const
+{
+    return !isOpen();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+tpmclient::Session::NativeType tpmclient::Session::getNative() const
+{
+    if (isClosed())
+    {
+        throw Exception{"Unable to get native type: session is closed"};
+    }
+
+    return mSession.get();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+tpmclient::Session::NativeType tpmclient::Session::operator*() const
+{
+    return getNative();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

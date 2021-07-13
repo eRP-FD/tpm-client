@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: tpm-simulator-2
+  name: tpm-simulator-2
+  namespace: %NAMESPACE%
+spec:
+  ports:
+    - port: 2321
+      protocol: TCP
+      targetPort: 2321
+      name: tpm-port
+    - port: 2322
+      protocol: TCP
+      targetPort: 2322
+      name: platform-port
+  selector:
+    app: tpm-simulator-2
+  type: ClusterIP
