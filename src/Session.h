@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef TPM_CLIENT_SESSION_H
 #define TPM_CLIENT_SESSION_H
 
@@ -15,7 +23,7 @@ namespace tpmclient
 {
 
 /**
- * TODO TSB
+ * A tpmclient `Session` object represents a communication channel with a TPM device.
  */
 class Session
 {
@@ -24,39 +32,39 @@ private:
 
 public:
     /**
-     * TODO TSB
+     * Native type of the underlying resource (dictated by underlying TSS library)
      */
     using NativeType = RawNativeType*;
 
     Session();
 
     /**
-     * TODO TSB
+     * Attempts to open a new session with the TPM. Throws if already open.
      */
     void open();
 
     /**
-     * TODO TSB
+     * Closes the session to the TPM. Throws if there is no open session.
      */
     void close();
 
     /**
-     * TODO TSB
+     * Queries whether this session object is open for communication with the TPM.
      */
     bool isOpen() const;
 
     /**
-     * TODO TSB
+     * Queries whether this session object is closed for communication with the TPM.
      */
     bool isClosed() const;
 
     /**
-     * TODO TSB
+     * Returns the native underlying type of the session.
      */
     NativeType getNative() const;
 
     /**
-     * TODO TSB
+     * Returns the native underlying type of the session.
      */
     NativeType operator*() const;
 

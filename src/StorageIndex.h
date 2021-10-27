@@ -1,3 +1,9 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #ifndef TPM_CLIENT_STORAGEINDEX_H
@@ -13,7 +19,7 @@ namespace tpmclient
 {
 
 /**
- * TODO TSB
+ * Wrapper for an unsigned integer used as an index to access the storage data.
  */
 class StorageIndex
 {
@@ -25,17 +31,17 @@ public:
     explicit StorageIndex(NativeType index);
 
     /**
-     * TODO TSB
+     * Queries whether this index is valid.
      */
     bool isValid() const;
 
     /**
-     * TODO TSB
+     * Returns the underlying wrapped type.
      */
     NativeType getNative() const;
 
     /**
-     * TODO TSB
+     * Returns the underlying wrapped type.
      */
     NativeType operator*() const;
 

@@ -1,3 +1,9 @@
+# (C) Copyright IBM Deutschland GmbH 2021
+# (C) Copyright IBM Corp. 2021
+# SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+
+########################################################################################################################
+
 # private function that sets the install runpath of a target to $ORIGIN so that its dependencies can be found at runtime
 #
 function (_private_set_runpath TARGET_NAME)

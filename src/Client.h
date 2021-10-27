@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef TPM_CLIENT_CLIENT_H
 #define TPM_CLIENT_CLIENT_H
 
@@ -22,7 +30,7 @@ class StorageIndex;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * TODO TSB
+ *
  */
 class Client
 {
@@ -34,64 +42,65 @@ public:
     explicit Client(std::shared_ptr<Session> session);
 
     /**
-     * TODO TSB
+     * Sets a new session for this client.
      */
     void setSession(std::shared_ptr<Session> session);
 
     /**
-     * TODO TSB
+     * Queries whether this client has a session set.
      */
     bool hasSession() const;
 
     /**
-     * TODO TSB
+     * Returns the session of this client. Throws if the client does not have a session.
      */
     const Session& getSession() const;
 
     /**
-     * TODO TSB
+     * Queries whether this client is valid and therefore ready to be used.
      */
     bool isValid() const;
 
     /**
-     * TODO TSB
+     * Attempts to ping the TPM using this client. Throws if the client is not valid.
      */
     void ping() const;
 
     /**
-     * TODO TSB
+     * Fetches the endorsement certificate and key from the TPM.
      */
     EndorsementIdentity getEk() const;
 
     /**
-     * TODO TSB
+     * Creates an attestation key on the TPM and returns it as an encrypted blob.
      */
     KeyPairBlob createAk() const;
 
     /**
-     * TODO TSB
+     * Given an encrypted attestation key blob (created earlier by createAk()),
+     * this function passes it to the TPM, decrypts it and returns the public key.
      */
     PublicKeyInfo getAk(const KeyPairBlob& akBlob) const;
 
     /**
-     * TODO TSB
+     * Generates a new credential at the TPM using the given attestation key.
      */
     MadeCredential makeCredential(const KeyPairBlob& akBlob) const;
 
     /**
-     * TODO TSB
+     * Attempts to authenticate a credential using the given attestation key.
      */
     Buffer authenticateCredential(const BufferView& secret,
                                   const BufferView& encryptedCredential,
                                   const KeyPairBlob& akBlob) const;
 
     /**
-     * TODO TSB
+     * Fetches a fresh quote from the TPM for the given registers using the given attestation key.
      */
     Quote getQuote(const BufferView& nonce, const PCRRegisterList& registerList, const KeyPairBlob& akBlob) const;
 
     /**
-     * TODO TSB
+     * Verifies whether given quote and signature are correct using the given attestation key.
      */
     void verifyQuote(const Quote& quote, const KeyPairBlob& akBlob) const;
 

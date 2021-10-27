@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef TPM_CLIENT_UTILS_H
 #define TPM_CLIENT_UTILS_H
 
@@ -17,18 +25,25 @@ namespace tpmclient
 {
 
 /**
- * TODO TSB
+ * Static class containing utility functions used throughout tpmclient.
  */
 class Utils
 {
 public:
     /**
-     * TODO TSB
+     * Builds an error message string describing what the given error code means.
+     * Used exclusively with TSS (underlying library) error codes.
      */
     static std::string BuildErrorMessage(Exception::NativeErrorCodeType errorCode);
 
     /**
-     * TODO TSB
+     * Attempts the try operation. If it does not fail, it returns its result.
+     *
+     * If it fails and the failing condition matches `catchCondition`,
+     * then it calls `fixOperation` and retries the initial operation.
+     *
+     * If the failing condition does not match or if the `fixOperation` fails too or
+     * if the initial operation fails again after fixing, the error is rethrown to the caller.
      */
     template <typename TryOperation, typename CatchCondition, typename FixOperation>
     static std::invoke_result_t<TryOperation> TryCatchFixRetry(const TryOperation& tryOperation,
@@ -36,13 +51,13 @@ public:
                                                                const FixOperation& fixOperation);
 
     /**
-     * TODO TSB
+     * Concatenates given buffers by moving from them.
      */
     template <typename HeadT, typename ...TailT>
     static HeadT ConcatenateBuffers(HeadT&& head, TailT&&... tail);
 
     /**
-     * TODO TSB
+     * Retrieves the n'th byte of the given 64-bit unsigned integer.
      */
     static std::uint8_t GetNthByte(std::uint64_t input, std::size_t index);
 };

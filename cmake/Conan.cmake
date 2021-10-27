@@ -1,3 +1,9 @@
+# (C) Copyright IBM Deutschland GmbH 2021
+# (C) Copyright IBM Corp. 2021
+# SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+
+########################################################################################################################
+
 # function that calls the Conan setup routines
 # initializing all third party dependencies variables
 #
@@ -7,11 +13,14 @@ macro(conan_setup)
         message(FATAL_ERROR "Cannot find conan. Is it installed?")
     endif()
 
-    set(CONAN_IMPORTS_MANIFEST_NAME "conan_imports_manifest.txt")
     set(CONAN_BUILD_INFO_SCRIPT ${BUILD_DIRECTORY}/conanbuildinfo.cmake)
-
     if (NOT EXISTS ${CONAN_BUILD_INFO_SCRIPT})
+        if (BUILD_TESTS)
+            set(OPTIONS -o with_tests=True)
+        endif()
+
         execute_process(COMMAND ${CONAN} install .
+                                         ${OPTIONS}
                                          --build=missing
                                          --install-folder=${BUILD_DIRECTORY}
                         WORKING_DIRECTORY ${ROOT_DIRECTORY}

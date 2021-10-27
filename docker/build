@@ -2,6 +2,12 @@
 
 ########################################################################################################################
 
+# (C) Copyright IBM Deutschland GmbH 2021
+# (C) Copyright IBM Corp. 2021
+# SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+
+########################################################################################################################
+
 # function that takes an error message as parameter, prints it
 # to stderr and then exits the script (with a non-zero status code)
 #
@@ -25,17 +31,15 @@ function help
     echo -e '
 script usage: $0 --image-name IMAGE_NAME [ optional arguments ]\n
 Arguments:\n
---help                        this help\n
---image-name [ required ]     name of the Docker image to be built\n
---ssh-key [ optional ]        path to SSH private key to use for cloning repos from;
-                              GitHub; if not given, "~/.ssh/id_rsa" will be used\n
---nexus-username [ optional ] the Nexus username used for consuming Conan recipes;
-                              if not given, you will be prompted to enter it\n
---nexus-password [ optional ] the Nexus password used for consuming Conan recipes;
-                              if not given, you will be prompted to enter it;
-                              if this is not a CI build, it might be preferred to enter it later\n
---simulator-port [ optional ] the TCP port that the HSM simulator will be accessible on;
-                              by default, it is set to 3001\n
+--help                            this help\n
+--image-name [ required ]         name of the Docker image to be built\n
+--nexus-username [ optional ]     the Nexus username used for consuming Conan recipes;
+                                  if not given, you will be prompted to enter it\n
+--nexus-password [ optional ]     the Nexus password used for consuming Conan recipes;
+                                  if not given, you will be prompted to enter it;
+                                  if this is not a CI build, it might be preferred to enter it later\n
+--simulator-port [ optional ]     the TCP port that the HSM simulator will be accessible on;
+                                  by default, it is set to 3001\n
 '
     exit 0
 }
@@ -48,7 +52,6 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --help) HELP=1;;
         --image-name) IMAGE_NAME="$2"; shift;;
-        --ssh-key) SSH_KEY_PATH="$2"; shift ;;
         --nexus-username) NEXUS_USERNAME="$2"; shift ;;
         --nexus-password) NEXUS_PASSWORD="$2"; shift ;;
         --simulator-port) SIMULATOR_PORT="$2"; shift ;;
@@ -69,13 +72,6 @@ fi
 #
 if [ -z "$IMAGE_NAME" ]; then
     error 'image name argument missing; see --help option for usage'
-fi
-
-# this is the SSH private key which is injected into
-# the Docker image so that it is able to clone repositories
-#
-if [ -z "$SSH_KEY_PATH" ]; then
-    SSH_KEY_PATH="$HOME/.ssh/id_rsa"
 fi
 
 # these are the Nexus credentials, also required
@@ -110,23 +106,16 @@ DOCKER_DIRECTORY=$(dirname $(readlink -f $BASH_SOURCE)) || error 'cannot grab "d
 #
 BUILD_CONTEXT_DIRECTORY=$(dirname $DOCKER_DIRECTORY)
 
-# grab the SSH key
-#
-SSH_KEY=$(cat $SSH_KEY_PATH) || error 'cannot fetch the SSH private key;
-                                       please generate a pair and then add the
-                                       public part to your GitHub account'
-
 # build the image
 #
-DOCKER_BUILDKIT=1 docker build --build-arg SSH_KEY="$SSH_KEY" \
-                               --build-arg NEXUS_USERNAME=$NEXUS_USERNAME \
+DOCKER_BUILDKIT=1 docker build --build-arg NEXUS_USERNAME=$NEXUS_USERNAME \
                                --build-arg NEXUS_PASSWORD=$NEXUS_PASSWORD \
                                --build-arg SIMULATOR_PORT=$SIMULATOR_PORT \
-                               --progress=plain \
-                               -t $IMAGE_NAME \
-                               -f $DOCKER_DIRECTORY/Dockerfile \
+                               --progress=plain                           \
+                               -t $IMAGE_NAME                             \
+                               -f $DOCKER_DIRECTORY/Dockerfile            \
                                $BUILD_CONTEXT_DIRECTORY || error 'unable to build image; see errors above'
 
-echo -e "\n\nImage '"$IMAGE_NAME"' has been built successfully and is ready to use!\n\n"
+echo -e "\n\nImage '"$IMAGE_NAME"' has been built successfully!\n\n"
 
 ########################################################################################################################

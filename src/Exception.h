@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef TPM_CLIENT_EXCEPTION_H
 #define TPM_CLIENT_EXCEPTION_H
 
@@ -13,7 +21,7 @@ namespace tpmclient
 {
 
 /**
- * TODO TSB
+ * Base exception class thrown by all tpmclient API calls.
  */
 class Exception : public std::runtime_error
 {
@@ -31,12 +39,12 @@ public:
     Exception(const std::string& errorMessage, NativeErrorCodeType errorCode);
 
     /**
-     * TODO TSB
+     * Checks if the exception object has an associated error code.
      */
     bool hasErrorCode() const;
 
     /**
-     * TODO TSB
+     * Returns the error code (presumably from the underlying TSS library).
      */
     NativeErrorCodeType getErrorCode() const;
 

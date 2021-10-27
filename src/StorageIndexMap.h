@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef TPM_CLIENT_STORAGEINDEXMAP_H
 #define TPM_CLIENT_STORAGEINDEXMAP_H
 
@@ -15,7 +23,7 @@ namespace tpmclient
 {
 
 /**
- * TODO TSB
+ * Singleton that acts as a means of converting from a storage key to a storage index.
  */
 class StorageIndexMap
 {
@@ -26,17 +34,17 @@ public:
     StorageIndexMap& operator=(StorageIndexMap&&) = delete;
 
     /**
-     * TODO TSB
+     * Returns the singleton instance.
      */
     static const StorageIndexMap& GetInstance();
 
     /**
-     * TODO TSB
+     * Retrieves the storage index for the given storage key. Throws if there is no index at given key.
      */
     const StorageIndex& getIndex(StorageIndexKey::PredefinedKeys key) const;
 
     /**
-     * TODO TSB
+     * Retrieves the storage index for the given storage key. Throws if there is no index at given key.
      */
     const StorageIndex& operator[](StorageIndexKey::PredefinedKeys key) const;
 

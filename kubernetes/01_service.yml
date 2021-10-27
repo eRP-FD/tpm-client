@@ -1,3 +1,10 @@
+# (C) Copyright IBM Deutschland GmbH 2021
+# (C) Copyright IBM Corp. 2021
+# SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+# - Simina Stefan <simina.stefan@ibm.com>
+
+########################################################################################################################
+
 apiVersion: v1
 kind: Service
 metadata:
@@ -18,3 +25,5 @@ spec:
   selector:
     app: tpm-simulator-1
   type: ClusterIP
+
+########################################################################################################################

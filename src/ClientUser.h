@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #ifndef TPM_CLIENT_CLIENT_USER_H
 #define TPM_CLIENT_CLIENT_USER_H
 
@@ -13,7 +21,7 @@ class Client;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * TODO TSB
+ * Wrapper for a `Client` object that sets it up in a RAII style.
  */
 class ClientUser
 {
@@ -28,7 +36,7 @@ public:
     ~ClientUser();
 
     /**
-     * TODO TSB
+     * Returns the `Client` object.
      */
     const Client& getClient() const;
 

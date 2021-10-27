@@ -1,3 +1,11 @@
+/*
+ * (C) Copyright IBM Deutschland GmbH 2021
+ * (C) Copyright IBM Corp. 2021
+ * SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+ */
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include "Client.h"
 
 #include "Exception.h"
@@ -107,9 +115,11 @@ TEST(ClientTests, createAk)
 
 TEST(ClientTests, getAk)
 {
-    const auto akBlob = GetClient().createAk();
+    const auto client = GetClient();
 
-    const auto ak = GetClient().getAk(akBlob);
+    const auto akBlob = client.createAk();
+    const auto ak = client.getAk(akBlob);
+
     EXPECT_FALSE(ak.name.empty());
     EXPECT_FALSE(ak.key.empty());
 }
@@ -118,9 +128,11 @@ TEST(ClientTests, getAk)
 
 TEST(ClientTests, makeCredential)
 {
-    const auto akBlob = GetClient().createAk();
+    const auto client = GetClient();
 
-    const auto madeCredential = GetClient().makeCredential(akBlob);
+    const auto akBlob = client.createAk();
+    const auto madeCredential = client.makeCredential(akBlob);
+
     EXPECT_FALSE(madeCredential.secret.empty());
     EXPECT_FALSE(madeCredential.credential.empty());
     EXPECT_FALSE(madeCredential.encryptedCredential.empty());
@@ -130,10 +142,11 @@ TEST(ClientTests, makeCredential)
 
 TEST(ClientTests, authenticateCredential)
 {
-    const auto akBlob = GetClient().createAk();
-    const auto madeCredential = GetClient().makeCredential(akBlob);
+    const auto client = GetClient();
 
-    const auto decryptedCredential = GetClient().authenticateCredential(
+    const auto akBlob = client.createAk();
+    const auto madeCredential = client.makeCredential(akBlob);
+    const auto decryptedCredential = client.authenticateCredential(
                                                            tpmclient::GetBufferView(madeCredential.secret),
                                                            tpmclient::GetBufferView(madeCredential.encryptedCredential),
                                                            akBlob);
@@ -145,11 +158,12 @@ TEST(ClientTests, authenticateCredential)
 
 TEST(ClientTests, getQuote)
 {
-    const auto akBlob = GetClient().createAk();
+    const auto client = GetClient();
 
-    const auto quote = GetClient().getQuote(tpmclient::GetBufferView(tpmclient::Buffer(32, 0xca)),
-                                            tpmclient::PCRRegisterList{0},
-                                            akBlob);
+    const auto akBlob = client.createAk();
+    const auto quote = client.getQuote(tpmclient::GetBufferView(tpmclient::Buffer(32, 0xca)),
+                                       tpmclient::PCRRegisterList{0},
+                                       akBlob);
 
     EXPECT_FALSE(quote.data.empty());
     EXPECT_FALSE(quote.signature.empty());
@@ -159,17 +173,18 @@ TEST(ClientTests, getQuote)
 
 TEST(ClientTests, verifyQuote)
 {
-    const auto akBlob = GetClient().createAk();
+    const auto client = GetClient();
 
-    auto quote = GetClient().getQuote(tpmclient::GetBufferView(tpmclient::Buffer(32, 0xca)),
-                                      tpmclient::PCRRegisterList{0},
-                                      akBlob);
+    const auto akBlob = client.createAk();
+    auto quote = client.getQuote(tpmclient::GetBufferView(tpmclient::Buffer(32, 0xca)),
+                                 tpmclient::PCRRegisterList{0},
+                                 akBlob);
 
-    EXPECT_NO_THROW(GetClient().verifyQuote(quote, akBlob));
+    EXPECT_NO_THROW(client.verifyQuote(quote, akBlob));
     ASSERT_FALSE(quote.signature.empty());
 
     quote.signature.front() = 0xca;
-    EXPECT_THROW(GetClient().verifyQuote(quote, akBlob), tpmclient::Exception);
+    EXPECT_THROW(client.verifyQuote(quote, akBlob), tpmclient::Exception);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
