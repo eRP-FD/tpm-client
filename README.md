@@ -2,26 +2,26 @@
 
 #### About
 
-This repository contains the TPM client -- a C++ library used by the VAU instances to securely use and communicate with the underlying physical `Trusted Platform Module`. For fulfilling that purpose, the library offers a straightforward and clean API (for VAU's needs), while internally using a third party dependency -- a library called [TSS](https://github.com/kgoldman/ibmtss) -- which does the actual heavy lifting of talking to the TPM hardware.
+Dieses Repository enthält den TPM-Client - eine C++-Bibliothek, die von den VAU-Instanzen verwendet wird, um das zugrunde liegende physische "Trusted Platform Module" sicher zu nutzen und mit ihm zu kommunizieren. Um diesen Zweck zu erfüllen, bietet die Bibliothek eine einfache und saubere API (für die Bedürfnisse von VAU), während sie intern eine Abhängigkeit von einer Drittpartei nutzt - eine Bibliothek namens [TSS](https://github.com/kgoldman/ibmtss) - die die eigentliche Arbeit der Kommunikation mit der TPM-Hardware übernimmt.
 
 #### How to build on Linux
 
-- install dependencies: 
+- Installieren sie folgende Abhängigkeiten:
   - `conan` (perhaps installed via `pip`, which itself needs `python`)
   - `cmake`
   - `make`
   - `gcc`
 
-- add the eRP Conan repository from Nexus: `conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal`
+- Fügen Sie das eRP Conan-Repository von Nexus hinzu: `conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal`
 
 - `conan profile update settings.compiler.libcxx=libstdc++11 default`
 
-- update your (perhaps `default`) Conan profile for the right build type (`Debug` or `Release`): `conan profile update settings.build_type=Debug default`
+- Aktualisieren Sie Ihr (vielleicht `default`) Conan-Profil für den richtigen Build-Typ (`Debug` oder `Release`): `conan profile update settings.build_type=Debug default`
 
-- create a build folder for the right build type: `mkdir build-debug`
+- Erstellen Sie einen Build-Ordner für den richtigen Build-Typ: mkdir build-debug
 
-- change working directory into the newly created folder and invoke CMake with the right build type: `cmake -DCMAKE_BUILD_TYPE=Debug ..`, eventually if you want to build tests as well then add `-DBUILD_TESTS=1`
+- Wechseln Sie das Arbeitsverzeichnis in den neu erstellten Ordner und rufen Sie CMake mit dem richtigen Build-Typ auf: `cmake -DCMAKE_BUILD_TYPE=Debug ..`, eventuell, wenn Sie auch Tests bauen wollen, fügen Sie `-DBUILD_TESTS=1` hinzu
 
-- build the project: `make -j4`
+- Bauen Sie das Projekt: `make -j4`
 
-- artefacts can be found in the build folder under `lib` (and tests under `bin`)
+- Artefakte können im Build-Ordner unter `lib` (und Tests unter `bin`) gefunden werden
