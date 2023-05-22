@@ -1,10 +1,11 @@
-# (C) Copyright IBM Deutschland GmbH 2021
-# (C) Copyright IBM Corp. 2021
-# SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+# (C) Copyright IBM Deutschland GmbH 2021, 2023
+# (C) Copyright IBM Corp 2021, 2023
+#
+# non-exclusively licensed to gematik GmbH
 
 ########################################################################################################################
 
-FROM conanio/gcc10:1.40.3 AS prerequisites
+FROM conanio/gcc10:1.59.0 AS prerequisites
 
 USER root
 ARG NEXUS_USERNAME

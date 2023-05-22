@@ -1,6 +1,7 @@
-// (C) Copyright IBM Deutschland GmbH 2021
-// (C) Copyright IBM Corp. 2021
-// SPDX-License-Identifier: CC BY-NC-ND 3.0 DE
+// (C) Copyright IBM Deutschland GmbH 2021, 2023
+// (C) Copyright IBM Corp 2021, 2023
+//
+// non-exclusively licensed to gematik GmbH
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -22,11 +23,11 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-        		cleanWs()
+                cleanWs()
                 commonCheckout()
             }
         }
-        
+
         stage('Create Release') {
             when {
                 anyOf {
@@ -38,7 +39,7 @@ pipeline {
                 gradleCreateReleaseEpa()
             }
         }
-        
+
         stage('Check Container Build') {
             when {
                 not {
@@ -50,18 +51,18 @@ pipeline {
             }
             steps {
                 loadNexusConfiguration {
-	                withCredentials(
-	                    [usernamePassword(credentialsId: "jenkins-github-erp", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
-	                ){
-	                    checkDockerBuild(
-	                        DOCKER_OPTS:"--build-arg NEXUS_USERNAME='${env.NEXUS_USERNAME}' --build-arg NEXUS_PASSWORD='${env.NEXUS_PASSWORD}'",
-	                        DOCKER_FILE:'docker/Dockerfile'
-	                    )
-	                }
-	            }
+                    withCredentials(
+                        [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
+                    ){
+                        checkDockerBuild(
+                            DOCKER_OPTS:'--build-arg NEXUS_USERNAME="${NEXUS_USERNAME}" --build-arg NEXUS_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_FILE:'docker/Dockerfile'
+                        )
+                    }
+                }
             }
         }
-        
+
         stage('Build Container') {
             when {
                 anyOf {
@@ -71,18 +72,18 @@ pipeline {
             }
             steps {
                 loadNexusConfiguration {
-	                withCredentials(
-	                    [usernamePassword(credentialsId: "jenkins-github-erp", usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
-	                ){
-	                    buildAndPushContainer(
-	                    	DOCKER_OPTS:"--build-arg NEXUS_USERNAME='${env.NEXUS_USERNAME}' --build-arg NEXUS_PASSWORD='${env.NEXUS_PASSWORD}'",
-	                        DOCKER_FILE:'docker/Dockerfile'
-	                    )
-	                }
-	            }
+                    withCredentials(
+                        [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
+                    ){
+                        buildAndPushContainer(
+                            DOCKER_OPTS:'--build-arg NEXUS_USERNAME="${NEXUS_USERNAME}" --build-arg NEXUS_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_FILE:'docker/Dockerfile'
+                        )
+                    }
+                }
             }
         }
-        
+
         stage('Publish Release') {
             when {
                 anyOf {
@@ -94,7 +95,39 @@ pipeline {
                 finishRelease()
             }
         }
-      
+
+        stage ("Publish to Nexus") {
+            agent {
+                docker {
+                    label 'dockerstage'
+                    image 'conanio/gcc10:latest'
+                    reuseNode true
+                    args '-u root:sudo'
+                }
+            }
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'release/*'
+                }
+            }
+            steps {
+                script {
+                    loadNexusConfiguration {
+                        sh '''
+                            git config --global --add safe.directory '*'
+                            conan remote clean &&\
+                            conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal true --force &&\
+                            conan user -r erp -p "${NEXUS_PASSWORD}" "${NEXUS_USERNAME}" &&\
+                            conan export . &&\
+                            conan export . tpmclient/latest@_/_ &&\
+                            conan upload --remote erp --confirm tpmclient
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Deployment to dev') {
             when {
                 anyOf {

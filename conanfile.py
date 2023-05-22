@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+# (C) Copyright IBM Deutschland GmbH 2021, 2023
+# (C) Copyright IBM Corp 2021, 2023
+#
+# non-exclusively licensed to gematik GmbH
+
 ###################################################################################################
 
 from conans import CMake
@@ -48,7 +53,7 @@ class TpmClientPackage(ConanFile):
                        'tss:with_hardware_tpm': False}
 
     settings = {'os': ['Linux', 'Windows'],
-                'compiler': ['gcc', 'Visual Studio'],
+                'compiler': ['gcc', 'Visual Studio', 'clang'],
                 'build_type': ['Debug', 'Release', 'RelWithDebInfo'],
                 'arch': ['x86', 'x86_64']}
 
@@ -84,7 +89,7 @@ class TpmClientPackage(ConanFile):
     def set_version(self):
         if not self.version:
             git = tools.Git()
-            self.version = git.run("describe --exclude 'v-*' --match 'v*'")[1:]
+            self.version = git.run('describe --tags --abbrev=0 --match "v-[0-9\.]*"')[2:]
 
     def build_requirements(self):
         if self.options.with_tests:
@@ -103,7 +108,7 @@ class TpmClientPackage(ConanFile):
             cmake.test()
 
     def package(self):
-        # call the CMake install target 
+        # call the CMake install target
         #
         cmake = self._get_cmake()
         cmake.install()
