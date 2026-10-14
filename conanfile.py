@@ -34,11 +34,11 @@ class TpmClientPackage(ConanFile):
         "shared": False,
         "fPIC": True,
         "with_tests": False,
-        "gtest:build_gmock": False,
-        "gtest:shared": True,
-        "tss:with_tpm_1_2": False,
-        "tss:with_tpm_2_0": True,
-        "tss:with_hardware_tpm": False,
+        "gtest/*:build_gmock": False,
+        "gtest/*:shared": True,
+        "tss/*:with_tpm_1_2": False,
+        "tss/*:with_tpm_2_0": True,
+        "tss/*:with_hardware_tpm": False,
     }
 
     @property
@@ -69,14 +69,11 @@ class TpmClientPackage(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
 
-    def layout(self):
-        cmake_layout(self)
-
     def requirements(self):
         self.requires("openssl/[>=1.1 <4]")
         self.requires("tss/2.0.1")
         if self.options.with_tests:
-            self.requires("gtest/1.11.0")
+            self.test_requires("gtest/1.11.0")
 
     def validate(self):
         # validate the minimum cpp standard supported. For C++ projects only
@@ -100,17 +97,10 @@ class TpmClientPackage(ConanFile):
         tc = CMakeDeps(self)
         tc.generate()
 
-        for dep in self.dependencies.values():
-            copy(self, "*crypto*.dll*", src=dep.cpp_info.bindirs[0], dst=self.install_folder)
-            copy(self, "*tss*.dll*", src=dep.cpp_info.bindirs[0], dst=self.install_folder)
-            if dep.cpp_info.libdirs:
-                copy(self, "*crypto*.so*", src=dep.cpp_info.libdirs[0], dst=self.install_folder)
-                copy(self, "*tss*.so*", src=dep.cpp_info.libdirs[0], dst=self.install_folder)
-
     def set_version(self):
         if not self.version:
             git = Git(self, folder=self.recipe_folder)
-            self.version = git.run('describe --tags --abbrev=0 --match "v-[0-9\.]*"')[2:]
+            self.version = git.run('describe --tags --abbrev=0 --match "v-[0-9\.]*"')[2:].lower()
 
     def build(self):
         cmake = CMake(self)

@@ -5,20 +5,21 @@
 
 ########################################################################################################################
 
-FROM conanio/gcc10:1.59.0 AS prerequisites
+FROM de.icr.io/erp_dev/erp-pc-ubuntu-build:2.2.1 as prerequisites
+
+RUN apt-get update --fix-missing && \
+    apt-get install -y binutils
 
 USER root
-ARG NEXUS_USERNAME
-ARG NEXUS_PASSWORD
+ARG CONAN_LOGIN_USERNAME
+ARG CONAN_PASSWORD
 
 # setup Conan and add the Nexus Conan repository
 #
-RUN conan config init --force &&                                                    \
-    conan profile new default --detect --force &&                                   \
-    conan profile update settings.build_type=Release default &&                     \
-    conan profile update settings.compiler.libcxx=libstdc++11 default &&            \
-    conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal && \
-    conan user $NEXUS_USERNAME -r erp -p $NEXUS_PASSWORD
+RUN conan remote add erp-conan-2 https://artifactory-cpp-ce.ihc-devops.net/artifactory/api/conan/erp-conan-2 && \
+    conan remote auth erp-conan-2 && \
+    conan list && \
+    conan list -r erp-conan-2
 
 ########################################################################################################################
 
@@ -28,17 +29,18 @@ FROM prerequisites as build
 #
 WORKDIR /source
 COPY . .
+COPY docker/files/default /root/.conan2/profiles/
 
 # configure & build
 #
 SHELL ["/bin/bash", "-c"]
 WORKDIR /build
-RUN conan install /source --build outdated --install-folder=/build --output-folder=/build -pr:b=default
-RUN cmake /source  -DCMAKE_TOOLCHAIN_FILE=/build/build/Release/generators/conan_toolchain.cmake -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_BUILD_TYPE=Release
+RUN conan install /source --build=missing --output-folder=/build -pr:b=default -o '&:with_tests=True' -s build_type=Release
+RUN cmake /source  -DCMAKE_TOOLCHAIN_FILE=/build/conan_toolchain.cmake -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_BUILD_TYPE=Release
 RUN cmake --build .
 RUN mkdir -p simulator/bin \
-    && conan install -pr:b=default swtpm2/164-2020-192.1@ --build missing --generator virtualrunenv -o openssl:shared=False -o openssl:no_zlib=True \
-    && source activate_run.sh \
+    && conan install -pr:b=default --requires=swtpm2/164-2020-192.1 --build=missing --generator VirtualRunEnv -o 'openssl/*:shared=False' -o 'openssl/*:no_zlib=True' \
+    && source conanrun.sh \
     && cp `which tpm_server` simulator/bin
 
 # clean up
@@ -53,14 +55,13 @@ FROM ubuntu:22.04 AS run
 ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update --fix-missing && \
     apt-get install -y netcat && rm -rf /var/lib/apt/lists/*
+
 # make a clean run directory
 #
 WORKDIR /run
 RUN rm -rf *
 COPY --from=build /build/simulator .
 COPY --from=build /source/docker/entrypoint.sh /entrypoint.sh
-
-#STOPSIGNAL SIGINT
 
 CMD ["/entrypoint.sh"]
 

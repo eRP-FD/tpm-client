@@ -44,7 +44,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BUILD_DIRECTORY}/bin)
 # include the relevant helper CMake scripts
 #
 include(${CMAKE_DIRECTORY}/BuildOptions.cmake)
-include(${CMAKE_DIRECTORY}/Conan.cmake)
+include(${CMAKE_BINARY_DIR}/conan_toolchain.cmake)
 include(${CMAKE_DIRECTORY}/Dependencies.cmake)
 include(${CMAKE_DIRECTORY}/Installation.cmake)
 include(${CMAKE_DIRECTORY}/TargetConfiguration.cmake)

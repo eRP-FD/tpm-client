@@ -15,6 +15,9 @@ pipeline {
         disableConcurrentBuilds()
         skipDefaultCheckout()
     }
+    tools {
+        jdk 'jdk_17'
+    }
     environment {
         ENABLE_GRADLE_BUILD_CACHE = 'true'
         ENABLE_GRADLE_CONFIG_CACHE = 'true' // gradle 6+
@@ -39,7 +42,24 @@ pipeline {
                 gradleCreateReleaseEpa()
             }
         }
-        
+
+        stage('SBOM and Sonar') {
+            steps {
+                 withVault(
+                    [[path: "secret/eRp/dependencytrack", secretValues: [[vaultKey: 'dependencytrack_apikey', envVar: 'DEPENDENCYTRACK_APIKEY']]],
+                        [path: "secret/eRp/dependencytrack", secretValues: [[vaultKey: 'frontend_url', envVar: 'DEPENDENCYTRACK_FRONTEND_URL']]],
+                        [path: "secret/eRp/dependencytrack", secretValues: [[vaultKey: 'serverhostname', envVar: 'DEPENDENCYTRACK_SERVER_HOSTNAME']]],
+                        [path: "secret/eRp/sonarqube", secretValues: [[vaultKey: 'sonarqubetoken', envVar: 'SONARQUBE_TOKEN']]],
+                        [path: "secret/eRp/sonarqube", secretValues: [[vaultKey: 'sonarqubeurl', envVar: 'SONARQUBE_URL']]]
+                        ]
+
+                 ) {
+                    staticAnalysis()
+                    dependencyTrack()
+                }
+            }
+        }
+
         stage('SBOM') {
             when {
                 anyOf {
@@ -53,7 +73,7 @@ pipeline {
                         [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
                     ){
                         sbomSyft(
-                            DOCKER_OPTS:'--build-arg NEXUS_USERNAME="${NEXUS_USERNAME}" --build-arg NEXUS_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${NEXUS_USERNAME}" --build-arg CONAN_PASSWORD="${NEXUS_PASSWORD}"',
                             DOCKER_FILE:'docker/Dockerfile'
                         )
                     }
@@ -76,7 +96,7 @@ pipeline {
                         [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
                     ){
                         checkDockerBuild(
-                            DOCKER_OPTS:'--build-arg NEXUS_USERNAME="${NEXUS_USERNAME}" --build-arg NEXUS_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${NEXUS_USERNAME}" --build-arg CONAN_PASSWORD="${NEXUS_PASSWORD}"',
                             DOCKER_FILE:'docker/Dockerfile'
                         )
                     }
@@ -97,7 +117,7 @@ pipeline {
                         [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
                     ){
                         buildAndPushContainer(
-                            DOCKER_OPTS:'--build-arg NEXUS_USERNAME="${NEXUS_USERNAME}" --build-arg NEXUS_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${NEXUS_USERNAME}" --build-arg CONAN_PASSWORD="${NEXUS_PASSWORD}"',
                             DOCKER_FILE:'docker/Dockerfile'
                         )
                     }
@@ -138,11 +158,11 @@ pipeline {
                         sh '''
                             git config --global --add safe.directory '*'
                             conan remote clean &&\
-                            conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal true --force &&\
-                            conan user -r erp -p "${NEXUS_PASSWORD}" "${NEXUS_USERNAME}" &&\
+                            conan remote add erp-conan-2 https://artifactory-cpp-ce.ihc-devops.net/artifactory/api/conan/erp-conan-2 true --force &&\
+                            conan user -r erp-conan-2 -p "${NEXUS_PASSWORD}" "${NEXUS_USERNAME}" &&\
                             conan export . &&\
                             conan export . tpmclient/latest@_/_ &&\
-                            conan upload --remote erp --confirm tpmclient
+                            conan upload --remote erp-conan-2 --confirm tpmclient
                         '''
                     }
                 }
