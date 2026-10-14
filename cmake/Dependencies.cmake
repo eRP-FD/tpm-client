@@ -7,16 +7,16 @@
 
 # fetch the dependencies' build infos via Conan
 #
-conan_setup()
 
 ########################################################################################################################
 
 # function that returns the list of third party
 # libraries (dependencies) that a target needs to link against
 #
+find_package(OpenSSL REQUIRED)
+find_package(tss REQUIRED)
 function (get_libraries_to_link_against RESULT)
-    set(${RESULT} CONAN_PKG::tss
-                  CONAN_PKG::openssl
+    set(${RESULT} tss::tss OpenSSL::SSL OpenSSL::Crypto
         PARENT_SCOPE)
 endfunction()
 

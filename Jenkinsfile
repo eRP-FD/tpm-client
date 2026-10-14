@@ -39,6 +39,27 @@ pipeline {
                 gradleCreateReleaseEpa()
             }
         }
+        
+        stage('SBOM') {
+            when {
+                anyOf {
+                    branch 'master'
+                    branch 'release/*'
+                }
+            }
+            steps {
+                loadNexusConfiguration {
+                    withCredentials(
+                        [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
+                    ){
+                        sbomSyft(
+                            DOCKER_OPTS:'--build-arg NEXUS_USERNAME="${NEXUS_USERNAME}" --build-arg NEXUS_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_FILE:'docker/Dockerfile'
+                        )
+                    }
+                }
+            }
+        }
 
         stage('Check Container Build') {
             when {

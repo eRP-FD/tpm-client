@@ -7,99 +7,114 @@
 
 ###################################################################################################
 
-from conans import CMake
-from conans import ConanFile
-from conans import tools
-
-###################################################################################################
+from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
+from conan.tools.build import check_min_cppstd
+from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
+from conan.tools.files import copy
+from conan.tools.microsoft import check_min_vs, is_msvc
+from conan.tools.scm import Version, Git
 
 import os
+import shutil
 
-###################################################################################################
+required_conan_version = ">=1.53.0"
+
 
 class TpmClientPackage(ConanFile):
+    name = "tpmclient"
+    description = "The TPM client access library"
+    license = "proprietary"
+    url = "https://github.ibmgcloud.net/eRp/tpm-client"
+    homepage = "https://github.ibmgcloud.net/eRp/tpm-client"
+    package_type = "library"
+    options = {"shared": [True, False], "fPIC": [True, False], "with_tests": [True, False]}
+    settings = "os", "arch", "compiler", "build_type"
+    default_options = {
+        "shared": False,
+        "fPIC": True,
+        "with_tests": False,
+        "gtest:build_gmock": False,
+        "gtest:shared": True,
+        "tss:with_tpm_1_2": False,
+        "tss:with_tpm_2_0": True,
+        "tss:with_hardware_tpm": False,
+    }
 
-    # custom properties for usage by this specific recipe's code, not by the Conan SDK
+    @property
+    def _min_cppstd(self):
+        return 17
 
-    _build_tests_cmake_argument = 'BUILD_TESTS'
+    @property
+    def _compilers_minimum_version(self):
+        return {
+            "gcc": "7",
+            "clang": "7",
+            "apple-clang": "10",
+        }
 
-    _hardware_tpm_cmake_argument = 'HARDWARE_TPM'
+    def export_sources(self):
+        git = Git(self)
+        included = git.included_files()
+        for i in included:
+            dst = os.path.join(self.export_sources_folder, i)
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(i, dst)
 
-    _test_build_requires = ['gtest/1.11.0']
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
 
-    _cmake = None
+    def configure(self):
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
 
-    # Conan properties, used by the Conan SDK
+    def layout(self):
+        cmake_layout(self)
 
-    name = 'tpmclient'
-
-    homepage = 'https://github.ibmgcloud.net/eRp/tpm-client'
-
-    description = 'The TPM client access library'
-
-    author = 'Theodor Serbana <theodor.serbana@ibm.com>'
-
-    license = 'proprietary'
-
-    url = 'https://github.ibmgcloud.net/eRp/tpm-client'
-
-    options = {'with_tests': [True, False]}
-
-    default_options = {'with_tests': False,
-                       'gtest:build_gmock': False,
-                       'gtest:shared': True,
-                       'tss:with_tpm_1_2': False,
-                       'tss:with_tpm_2_0': True,
-                       'tss:with_hardware_tpm': False}
-
-    settings = {'os': ['Linux', 'Windows'],
-                'compiler': ['gcc', 'Visual Studio', 'clang'],
-                'build_type': ['Debug', 'Release', 'RelWithDebInfo'],
-                'arch': ['x86', 'x86_64']}
-
-    generators = ['cmake']
-
-    exports_sources = '*'
-
-    build_requires = []
-
-    requires = ['openssl/1.1.1l',
-                'swtpm2/1636',
-                'tss/1.6.0']
-
-    def _get_cmake(self):
-        if self._cmake:
-            return self._cmake
-
-        self._cmake = CMake(self, set_cmake_flags=True)
-
-        # build the tests if option was given
-        #
+    def requirements(self):
+        self.requires("openssl/[>=1.1 <4]")
+        self.requires("tss/2.0.1")
         if self.options.with_tests:
-            self._cmake.definitions[self._build_tests_cmake_argument] = 1
+            self.requires("gtest/1.11.0")
 
-        if self.options['tss'].with_hardware_tpm:
-            self._cmake.definitions[self._hardware_tpm_cmake_argument] = 1
+    def validate(self):
+        # validate the minimum cpp standard supported. For C++ projects only
+        if self.settings.compiler.cppstd:
+            check_min_cppstd(self, self._min_cppstd)
+        check_min_vs(self, 191)
+        if not is_msvc(self):
+            minimum_version = self._compilers_minimum_version.get(str(self.settings.compiler), False)
+            if minimum_version and Version(self.settings.compiler.version) < minimum_version:
+                raise ConanInvalidConfiguration(
+                    f"{self.ref} requires C++{self._min_cppstd}, which your compiler does not support."
+                )
 
-        # call cmake configure
-        #
-        self._cmake.configure()
-        return self._cmake
+    def generate(self):
+        tc = CMakeToolchain(self)
+        if self.options.with_tests:
+            tc.variables["BUILD_TESTS"] = True
+        if self.dependencies["tss"].options.with_hardware_tpm:
+            tc.variables["HARDWARE_TPM"] = True
+        tc.generate()
+        tc = CMakeDeps(self)
+        tc.generate()
+
+        for dep in self.dependencies.values():
+            copy(self, "*crypto*.dll*", src=dep.cpp_info.bindirs[0], dst=self.install_folder)
+            copy(self, "*tss*.dll*", src=dep.cpp_info.bindirs[0], dst=self.install_folder)
+            if dep.cpp_info.libdirs:
+                copy(self, "*crypto*.so*", src=dep.cpp_info.libdirs[0], dst=self.install_folder)
+                copy(self, "*tss*.so*", src=dep.cpp_info.libdirs[0], dst=self.install_folder)
 
     def set_version(self):
         if not self.version:
-            git = tools.Git()
+            git = Git(self, folder=self.recipe_folder)
             self.version = git.run('describe --tags --abbrev=0 --match "v-[0-9\.]*"')[2:]
 
-    def build_requirements(self):
-        if self.options.with_tests:
-            for dependency in self._test_build_requires:
-                self.build_requires(dependency)
-
     def build(self):
-        # build the source code
-        #
-        cmake = self._get_cmake()
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
 
         # run the tests if option was given
@@ -108,21 +123,11 @@ class TpmClientPackage(ConanFile):
             cmake.test()
 
     def package(self):
-        # call the CMake install target
-        #
-        cmake = self._get_cmake()
+        cmake = CMake(self)
         cmake.install()
 
     def package_info(self):
-        self.cpp_info.libs = tools.collect_libs(self)
+        self.cpp_info.libs = ["tpmclient"]
 
-    def imports(self):
-        self.copy('tpm_server*', os.path.join('simulator', 'bin'), 'bin')
-
-        self.copy('*crypto*.dll*', 'bin', 'bin')
-        self.copy('*tss*.dll*',  'bin', 'bin')
-
-        self.copy('*crypto*.so*', 'lib', 'lib')
-        self.copy('*tss*.so*', 'lib', 'lib')
 
 ###################################################################################################

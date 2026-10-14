@@ -9,13 +9,13 @@
 # initializing all third party dependencies variables
 #
 macro(conan_setup)
-    find_program(CONAN conan)
-    if (NOT CONAN)
-        message(FATAL_ERROR "Cannot find conan. Is it installed?")
-    endif()
 
-    set(CONAN_BUILD_INFO_SCRIPT ${BUILD_DIRECTORY}/conanbuildinfo.cmake)
+    set(CONAN_BUILD_INFO_SCRIPT ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
     if (NOT EXISTS ${CONAN_BUILD_INFO_SCRIPT})
+        find_program(CONAN conan)
+        if (NOT CONAN)
+            message(FATAL_ERROR "Cannot find conan. Is it installed?")
+        endif()
         if (BUILD_TESTS)
             set(OPTIONS -o with_tests=True)
         endif()
@@ -24,6 +24,7 @@ macro(conan_setup)
                                          ${OPTIONS}
                                          --build=missing
                                          --install-folder=${BUILD_DIRECTORY}
+                                         --output-folder=${BUILD_DIRECTORY}
                         WORKING_DIRECTORY ${ROOT_DIRECTORY}
                         RESULT_VARIABLE RESULT)
 
@@ -32,8 +33,7 @@ macro(conan_setup)
         endif()
     endif()
 
-    include(${CONAN_BUILD_INFO_SCRIPT})
-
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
     conan_basic_setup(TARGETS)
 endmacro()
 
