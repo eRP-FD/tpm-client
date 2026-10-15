@@ -12,7 +12,7 @@ This repository contains the TPM client -- a C++ library used by the VAU instanc
   - `make`
   - `gcc`
 
-- add the eRP Conan repository from Nexus: `conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal`
+- add the eRP Conan repository: `conan remote add erp <CONAN_URL>`
 
 - `conan profile update settings.compiler.libcxx=libstdc++11 default`
 

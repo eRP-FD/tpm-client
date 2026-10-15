@@ -68,12 +68,12 @@ pipeline {
                 }
             }
             steps {
-                loadNexusConfiguration {
+                loadArtifactoryConfigurationeRP {
                     withCredentials(
                         [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
                     ){
                         sbomSyft(
-                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${NEXUS_USERNAME}" --build-arg CONAN_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${CONAN_USERNAME}" --build-arg CONAN_PASSWORD="${CONAN_PASSWORD}" --build-arg CONAN_URL="${CONAN_URL}"',
                             DOCKER_FILE:'docker/Dockerfile'
                         )
                     }
@@ -91,12 +91,12 @@ pipeline {
                 }
             }
             steps {
-                loadNexusConfiguration {
+                loadArtifactoryConfigurationeRP {
                     withCredentials(
                         [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
                     ){
                         checkDockerBuild(
-                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${NEXUS_USERNAME}" --build-arg CONAN_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${CONAN_USERNAME}" --build-arg CONAN_PASSWORD="${CONAN_PASSWORD}" --build-arg CONAN_URL="${CONAN_URL}"',
                             DOCKER_FILE:'docker/Dockerfile'
                         )
                     }
@@ -112,12 +112,12 @@ pipeline {
                 }
             }
             steps {
-                loadNexusConfiguration {
+                loadArtifactoryConfigurationeRP {
                     withCredentials(
                         [usernamePassword(credentialsId: 'jenkins-github-erp', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_OAUTH_TOKEN')]
                     ){
                         buildAndPushContainer(
-                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${NEXUS_USERNAME}" --build-arg CONAN_PASSWORD="${NEXUS_PASSWORD}"',
+                            DOCKER_OPTS:'--build-arg CONAN_LOGIN_USERNAME="${CONAN_USERNAME}" --build-arg CONAN_PASSWORD="${CONAN_PASSWORD}" --build-arg CONAN_URL="${CONAN_URL}"',
                             DOCKER_FILE:'docker/Dockerfile'
                         )
                     }
@@ -141,7 +141,7 @@ pipeline {
             agent {
                 docker {
                     label 'dockerstage'
-                    image 'conanio/gcc10:latest'
+                    image 'conanio/gcc11-ubuntu16.04:2.23.0'
                     reuseNode true
                     args '-u root:sudo'
                 }
@@ -154,15 +154,14 @@ pipeline {
             }
             steps {
                 script {
-                    loadNexusConfiguration {
+                    loadArtifactoryConfigurationeRP {
                         sh '''
                             git config --global --add safe.directory '*'
-                            conan remote clean &&\
-                            conan remote add erp-conan-2 https://artifactory-cpp-ce.ihc-devops.net/artifactory/api/conan/erp-conan-2 true --force &&\
-                            conan user -r erp-conan-2 -p "${NEXUS_PASSWORD}" "${NEXUS_USERNAME}" &&\
+                            conan remote remove '*' &&\
+                            conan remote add --force erp-conan-2 "${CONAN_URL}" &&\
+                            conan remote login -p "${CONAN_PASSWORD}" erp-conan-2 "${CONAN_USERNAME}" &&\
                             conan export . &&\
-                            conan export . tpmclient/latest@_/_ &&\
-                            conan upload --remote erp-conan-2 --confirm tpmclient
+                            conan upload -r erp-conan-2 --confirm "tpmclient/*"
                         '''
                     }
                 }

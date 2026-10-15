@@ -13,10 +13,12 @@ RUN apt-get update --fix-missing && \
 USER root
 ARG CONAN_LOGIN_USERNAME
 ARG CONAN_PASSWORD
+ARG CONAN_URL
 
 # setup Conan and add the Nexus Conan repository
 #
-RUN conan remote add erp-conan-2 https://artifactory-cpp-ce.ihc-devops.net/artifactory/api/conan/erp-conan-2 && \
+
+RUN conan remote add erp-conan-2 ${CONAN_URL} && \
     conan remote auth erp-conan-2 && \
     conan list && \
     conan list -r erp-conan-2

@@ -12,7 +12,7 @@ Dieses Repository enthält den TPM-Client - eine C++-Bibliothek, die von den VAU
   - `make`
   - `gcc`
 
-- Fügen Sie das eRP Conan-Repository von Nexus hinzu: `conan remote add erp https://nexus.epa-dev.net/repository/erp-conan-internal`
+- Fügen Sie das eRP Conan-Repository hinzu: `conan remote add erp <CONAN_URL>`
 
 - `conan profile update settings.compiler.libcxx=libstdc++11 default`
 
